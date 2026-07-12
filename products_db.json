@@ -4,9 +4,8 @@
       "id": "prod-01",
       "code": "BLZ-01",
       "name": "COLD-WEATHER EXOSHELL",
+      "image": "IMAGE_BLZ_01",
       "price": 185000,
-      "category": "JACKETS",
-      "stock": 5,
       "sizes": [
         "S",
         "M",
@@ -16,7 +15,6 @@
         "3XL",
         "4XL"
       ],
-      "description": "HIGH-ALTITUDE SHIELD CONSTRUCTED FROM MIL-SPEC REINFORCED MEMBRANE. ASYMMETRIC WEATHERPROOF ZIP CLOSURES, COLLAPSIBLE RADAR HOOD SYSTEM, AND MODULAR STRAPPING MATRIX FOR MAXIMUM MOBILITY CONSTRAINTS.",
       "specs": [
         "MIL-SPEC 3-LAYER EXOSHELL WATERPROOFING",
         "ASYMMETRIC YKK AQUAGUARD ZIP MATRIX",
@@ -24,15 +22,16 @@
         "4-POINT ANCHOR TACTICAL STRAP SYSTEMS",
         "COORDINATES // 6.4542° N, 3.3887° E LOGGED"
       ],
-      "image": "IMAGE_BLZ_01"
+      "stock": 5,
+      "category": "JACKETS",
+      "description": "HIGH-ALTITUDE SHIELD CONSTRUCTED FROM MIL-SPEC REINFORCED MEMBRANE. ASYMMETRIC WEATHERPROOF ZIP CLOSURES, COLLAPSIBLE RADAR HOOD SYSTEM, AND MODULAR STRAPPING MATRIX FOR MAXIMUM MOBILITY CONSTRAINTS."
     },
     {
       "id": "prod-02",
       "code": "BLZ-02",
       "name": "THERMAL GRID HOOD",
+      "image": "IMAGE_BLZ_02",
       "price": 85000,
-      "category": "HOODIES",
-      "stock": 12,
       "sizes": [
         "S",
         "M",
@@ -42,7 +41,6 @@
         "3XL",
         "4XL"
       ],
-      "description": "HEAVYWEIGHT 480GSM COTTON-GRID FLEECE FORMULATED FOR STATIC DEGREES. FEATURES AN INTEGRATED SCUBA-PROFILE FACE SHIELD, DEEP-CARGO FRONT VENTRAL HOUSING, AND COATED D-RING REINFORCEMENTS.",
       "specs": [
         "480GSM HEAVYWEIGHT COTTON MESH STRUCTURE",
         "COLLAPSIBLE VENTILATED COMBAT FACE SHIELD",
@@ -50,15 +48,16 @@
         "VENTRAL ENVELOPE UTILITY CARGO SYSTEM",
         "WASH SPEC // REVERSE CYCLE COLD ONLY"
       ],
-      "image": "IMAGE_BLZ_02"
+      "stock": 12,
+      "category": "HOODIES",
+      "description": "HEAVYWEIGHT 480GSM COTTON-GRID FLEECE FORMULATED FOR STATIC DEGREES. FEATURES AN INTEGRATED SCUBA-PROFILE FACE SHIELD, DEEP-CARGO FRONT VENTRAL HOUSING, AND COATED D-RING REINFORCEMENTS."
     },
     {
       "id": "prod-03",
       "code": "BLZ-03",
       "name": "UTILITY ARCHIVE CARGO",
+      "image": "IMAGE_BLZ_03",
       "price": 115000,
-      "category": "PANTS",
-      "stock": 8,
       "sizes": [
         "S",
         "M",
@@ -68,7 +67,6 @@
         "3XL",
         "4XL"
       ],
-      "description": "STRUCTURAL MULTI-DIMENSIONAL TROUSERS IN HIGH-TENACITY NYLON RIPSTOP. DUAL OVERSIZED POCKET ARCHIVES WITH INTERIOR SUB-COMPARTMENTS AND RETRACTABLE ANKLE RESTRAINT HARDWARE.",
       "specs": [
         "HIGH-TENACITY 500D NYLON RIPSTOP BASE",
         "6-POCKET RETICULATED ARCHIVE HARNESSING",
@@ -76,23 +74,28 @@
         "ERGO-JOINT KNEE BENDING ARTICULATION",
         "REINFORCED CRUTCH SEAMS FOR EXTREME STRAIN"
       ],
-      "image": "IMAGE_BLZ_03"
+      "stock": 8,
+      "category": "PANTS",
+      "description": "STRUCTURAL MULTI-DIMENSIONAL TROUSERS IN HIGH-TENACITY NYLON RIPSTOP. DUAL OVERSIZED POCKET ARCHIVES WITH INTERIOR SUB-COMPARTMENTS AND RETRACTABLE ANKLE RESTRAINT HARDWARE."
     },
     {
       "id": "prod-04",
       "code": "BLZ-04",
-      "name": "MODULAR PLATFORM BOOT",
+      "name": "MODULAR PLATFORM SHOE",
+      "image": "IMAGE_BLZ_04",
       "price": 240000,
-      "category": "FOOTWEAR",
-      "stock": 4,
       "sizes": [
+        "38",
+        "39",
+        "40",
         "41",
         "42",
         "43",
         "44",
-        "45"
+        "45",
+        "46",
+        "47"
       ],
-      "description": "TACTICAL PLATFORM FOOT CONSTRUCT FEATURING CHISELED GEOMETRIC OUTSOLE ARMATURE. WRAP-AROUND BALLISTIC STRAPPING HARDWARE WITH STEEL COUPLING SYSTEMS AND VULCANIZED REINFORCED TOE-CAPS.",
       "specs": [
         "CHISELED GEOMETRIC HIGH-TRACTION MIDSOLE",
         "1000D BALLISTIC NYLON & LEATHER HARNESS",
@@ -100,210 +103,212 @@
         "INDUSTRIAL QUICK-RELEASE COUPLER MECHANISMS",
         "UNIT LOAD // MAXIMUM SHOCK COMPRESSION"
       ],
-      "image": "IMAGE_BLZ_04"
+      "stock": 4,
+      "category": "SHOES",
+      "description": "TACTICAL PLATFORM FOOT CONSTRUCT FEATURING CHISELED GEOMETRIC OUTSOLE ARMATURE. WRAP-AROUND BALLISTIC STRAPPING HARDWARE WITH STEEL COUPLING SYSTEMS AND VULCANIZED REINFORCED TOE-CAPS."
     }
   ],
   "settings": {
-    "whatsappNumber": "2348031234567",
+    "tagline": "BLAZEBRO // HIGH-PERFORMANCE BRUTALIST CONSTRUCTS FOR URBAN OUTPOSTS.",
     "latitude": "6.4542",
     "longitude": "3.3887",
-    "tagline": "BLAZEBRO // HIGH-PERFORMANCE BRUTALIST CONSTRUCTS FOR URBAN OUTPOSTS.",
     "adminPasscode": "1337",
+    "storeDiscount": 0,
     "allowAiAdvisor": false,
-    "storeDiscount": 0
+    "whatsappNumber": "2348031234567"
   },
   "stats": {
-    "views": 169,
+    "views": 214,
     "whatsappClicks": 25,
     "potentialRevenue": 4730000
   },
   "orders": [
     {
       "id": "BLZ-ORD-752295",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.146Z"
+      "timestamp": "2026-07-08T13:19:30.146Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-755731",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.144Z"
+      "timestamp": "2026-07-08T13:19:30.144Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-760360",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.143Z"
+      "timestamp": "2026-07-08T13:19:30.143Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-753580",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.134Z"
+      "timestamp": "2026-07-08T13:19:30.134Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-751091",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.133Z"
+      "timestamp": "2026-07-08T13:19:30.133Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-750885",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.132Z"
+      "timestamp": "2026-07-08T13:19:30.132Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-749775",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.131Z"
+      "timestamp": "2026-07-08T13:19:30.131Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-757798",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:30.129Z"
+      "timestamp": "2026-07-08T13:19:30.129Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-770449",
-      "customerName": "nnn",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:29.624Z"
+      "timestamp": "2026-07-08T13:19:29.624Z",
+      "customerName": "nnn"
     },
     {
       "id": "BLZ-ORD-752844",
-      "customerName": "ghg",
       "items": [
         {
-          "productId": "prod-04",
           "code": "BLZ-04",
-          "name": "MODULAR PLATFORM BOOT",
+          "name": "MODULAR PLATFORM SHOE",
           "size": "45",
+          "price": 240000,
           "quantity": 1,
-          "price": 240000
+          "productId": "prod-04"
         }
       ],
       "total": 240000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T13:19:29.527Z"
+      "timestamp": "2026-07-08T13:19:29.527Z",
+      "customerName": "ghg"
     },
     {
       "id": "BLZ-ORD-709560",
-      "customerName": "ysiy",
       "items": [
         {
-          "productId": "prod-02",
           "code": "BLZ-02",
           "name": "THERMAL GRID HOOD",
           "size": "4XL",
+          "price": 85000,
           "quantity": 1,
-          "price": 85000
+          "productId": "prod-02"
         }
       ],
       "total": 85000,
       "status": "PENDING_WHATSAPP",
-      "timestamp": "2026-07-08T12:11:49.136Z"
+      "timestamp": "2026-07-08T12:11:49.136Z",
+      "customerName": "ysiy"
     }
   ]
 }

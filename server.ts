@@ -100,11 +100,11 @@ const INITIAL_PRODUCTS = [
   {
     id: "prod-04",
     code: "BLZ-04",
-    name: "MODULAR PLATFORM BOOT",
+    name: "MODULAR PLATFORM SHOE",
     price: 240000,
-    category: "FOOTWEAR",
+    category: "SHOES",
     stock: 4,
-    sizes: ["41", "42", "43", "44", "45"],
+    sizes: ["38", "39", "40", "41", "42", "43", "44", "45", "46", "47"],
     description: "TACTICAL PLATFORM FOOT CONSTRUCT FEATURING CHISELED GEOMETRIC OUTSOLE ARMATURE. WRAP-AROUND BALLISTIC STRAPPING HARDWARE WITH STEEL COUPLING SYSTEMS AND VULCANIZED REINFORCED TOE-CAPS.",
     specs: [
       "CHISELED GEOMETRIC HIGH-TRACTION MIDSOLE",

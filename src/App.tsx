@@ -36,7 +36,7 @@ import blz02_img from './assets/images/blz_02_thermal_hood_1783502868962.jpg';
 // @ts-ignore
 import blz03_img from './assets/images/blz_03_cargo_pants_1783502884275.jpg';
 // @ts-ignore
-import blz04_img from './assets/images/blz_04_boots_1783502896693.jpg';
+import blz04_img from './assets/images/blz_04_shoes_1783502896693.jpg';
 
 import { Product, CartItem, Order, SystemSettings, AdminStats } from './types';
 
@@ -55,6 +55,7 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Settings & Stats
@@ -220,6 +221,7 @@ export default function App() {
   // Dynamic Product Page Routing Helpers
   const selectProduct = (product: Product) => {
     setSelectedProduct(product);
+    setActiveMediaIndex(0);
     window.location.hash = `product-${product.code}`;
   };
 
@@ -237,6 +239,7 @@ export default function App() {
         const found = products.find(p => p.code === code);
         if (found) {
           setSelectedProduct(found);
+          setActiveMediaIndex(0);
         }
       } else if (!hash.startsWith('#product-') && activeView !== 'admin') {
         setSelectedProduct(null);
@@ -253,6 +256,26 @@ export default function App() {
   // UI Helper to resolve image paths (handling map strings vs external links)
   const getProductImage = (imageKey: string) => {
     return imageMap[imageKey] || imageKey || "https://picsum.photos/seed/blazebro/600/600";
+  };
+
+  const getProductMediaList = (product: Product) => {
+    const list: { type: 'image' | 'video'; url: string }[] = [];
+    
+    if (product.images && product.images.length > 0) {
+      product.images.forEach(img => {
+        if (img) list.push({ type: 'image', url: img });
+      });
+    } else if (product.image) {
+      list.push({ type: 'image', url: product.image });
+    }
+
+    if (product.videos && product.videos.length > 0) {
+      product.videos.forEach(vid => {
+        if (vid) list.push({ type: 'video', url: vid });
+      });
+    }
+
+    return list;
   };
 
   // Naira Price Formatter
@@ -380,6 +403,48 @@ export default function App() {
   };
 
   // Product management operations (API-backed)
+  const handleMediaFiles = (files: FileList) => {
+    const filePromises = Array.from(files).map((file) => {
+      return new Promise<{ type: 'image' | 'video'; result: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const type = file.type.startsWith('video/') ? 'video' : 'image';
+          resolve({ type, result: reader.result as string });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(filePromises)
+      .then((results) => {
+        if (!editingProduct) return;
+        const currentImages = editingProduct.images || (editingProduct.image ? [editingProduct.image] : []);
+        const currentVideos = editingProduct.videos || [];
+        
+        const newImages = [...currentImages];
+        const newVideos = [...currentVideos];
+        let coverImage = editingProduct.image;
+
+        results.forEach(({ type, result }) => {
+          if (type === 'image') {
+            newImages.push(result);
+            if (!coverImage) coverImage = result;
+          } else if (type === 'video') {
+            newVideos.push(result);
+          }
+        });
+
+        setEditingProduct({
+          ...editingProduct,
+          image: coverImage,
+          images: newImages,
+          videos: newVideos,
+        });
+      })
+      .catch((err) => console.error("Error loading multiple media assets:", err));
+  };
+
   const startNewProduct = () => {
     setEditingProduct({
       code: '',
@@ -390,19 +455,33 @@ export default function App() {
       sizes: ['S', 'M', 'L'],
       description: '',
       specs: [],
-      image: ''
+      image: '',
+      images: [],
+      videos: []
     });
   };
 
   const startEditProduct = (product: Product) => {
-    setEditingProduct(product);
+    setEditingProduct({
+      ...product,
+      images: product.images || (product.image ? [product.image] : []),
+      videos: product.videos || []
+    });
   };
 
   const saveProduct = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingProduct || !editingProduct.code || !editingProduct.name) return;
-    if (!editingProduct.image) {
-      alert("PLEASE UPLOAD AN IMAGE FROM YOUR DEVICE TO CREATE THE PRODUCT.");
+    
+    let updatedProduct = { ...editingProduct };
+    
+    // Automatically set the first image as the cover if cover is empty
+    if (!updatedProduct.image && updatedProduct.images && updatedProduct.images.length > 0) {
+      updatedProduct.image = updatedProduct.images[0];
+    }
+
+    if (!updatedProduct.image) {
+      alert("PLEASE UPLOAD AT LEAST ONE IMAGE AS THE COVER TO CREATE THE PRODUCT.");
       return;
     }
 
@@ -410,7 +489,7 @@ export default function App() {
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProduct)
+        body: JSON.stringify(updatedProduct)
       });
       if (res.ok) {
         fetchProducts();
@@ -450,7 +529,7 @@ export default function App() {
     }
   };
 
-  const categories = ['ALL', 'JACKETS', 'HOODIES', 'PANTS', 'FOOTWEAR'];
+  const categories = ['ALL', 'JACKETS', 'HOODIES', 'PANTS', 'SHOES'];
   const filteredProducts = products.filter(p => {
     const matchesCategory = selectedCategory === 'ALL' || p.category.toUpperCase() === selectedCategory;
     const q = searchQuery.toLowerCase().trim();
@@ -736,23 +815,87 @@ export default function App() {
               {/* Main Product Spec Columns */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
-                {/* Left Column: Huge High-Contrast Product Image */}
-                <div className="lg:col-span-6 border border-black/10 bg-zinc-100/40 relative aspect-square overflow-hidden group">
-                  <img 
-                    src={getProductImage(selectedProduct.image)} 
-                    alt={selectedProduct.name} 
-                    className="w-full h-full object-cover grayscale contrast-125 brightness-95" 
-                    referrerPolicy="no-referrer"
-                  />
-                  {/* Brand watermark stamp */}
-                  <div className="absolute bottom-4 left-4 bg-black/80 px-3 py-1 text-[8px] border border-black/10 tracking-widest text-[#bbb] font-bold">
-                    BLAZEBRO // BASE HQ DISPATCH
-                  </div>
-                  {selectedProduct.stock <= 2 && (
-                    <div className="absolute top-4 right-4 bg-red-950/90 text-red-400 text-[8px] px-2.5 py-1 border border-red-500/30 tracking-wider font-bold">
-                      CRITICAL STOCK LEVEL // ONLY {selectedProduct.stock} UNITS REMAINING
+                {/* Left Column: Huge High-Contrast Product Media Viewport */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div className="border border-black/10 bg-zinc-100/40 relative aspect-square overflow-hidden group">
+                    {(() => {
+                      const mediaList = getProductMediaList(selectedProduct);
+                      const currentMedia = mediaList[activeMediaIndex] || mediaList[0] || { type: 'image', url: selectedProduct.image };
+                      
+                      if (currentMedia.type === 'video') {
+                        return (
+                          <video 
+                            src={currentMedia.url} 
+                            controls 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline 
+                            className="w-full h-full object-cover grayscale contrast-125 brightness-95"
+                          />
+                        );
+                      } else {
+                        return (
+                          <img 
+                            src={getProductImage(currentMedia.url)} 
+                            alt={selectedProduct.name} 
+                            className="w-full h-full object-cover grayscale contrast-125 brightness-95 transition-all duration-300" 
+                            referrerPolicy="no-referrer"
+                          />
+                        );
+                      }
+                    })()}
+                    
+                    {/* Brand watermark stamp */}
+                    <div className="absolute bottom-4 left-4 bg-black/80 px-3 py-1 text-[8px] border border-black/10 tracking-widest text-[#bbb] font-bold z-10 font-mono">
+                      BLAZEBRO // BASE HQ DISPATCH
                     </div>
-                  )}
+                    {selectedProduct.stock <= 2 && (
+                      <div className="absolute top-4 right-4 bg-red-950/90 text-red-400 text-[8px] px-2.5 py-1 border border-red-500/30 tracking-wider font-bold z-10 font-mono">
+                        CRITICAL STOCK LEVEL // ONLY {selectedProduct.stock} UNITS REMAINING
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Thumbnails Gallery */}
+                  {(() => {
+                    const mediaList = getProductMediaList(selectedProduct);
+                    if (mediaList.length <= 1) return null;
+                    return (
+                      <div className="grid grid-cols-5 gap-2 pt-2">
+                        {mediaList.map((media, index) => {
+                          const isActive = index === activeMediaIndex;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => setActiveMediaIndex(index)}
+                              className={`aspect-square border relative overflow-hidden transition-all duration-200 cursor-pointer ${
+                                isActive ? 'border-black ring-1 ring-black bg-zinc-100' : 'border-black/10 hover:border-black/50 bg-zinc-50'
+                              }`}
+                            >
+                              {media.type === 'video' ? (
+                                <div className="w-full h-full bg-zinc-900 relative flex items-center justify-center">
+                                  <video src={media.url} className="w-full h-full object-cover opacity-70" muted />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <div className="w-5 h-5 border border-white/40 rounded-full flex items-center justify-center bg-black/50">
+                                      <span className="text-[6px] text-white font-bold ml-[1px]">▶</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <img
+                                  src={getProductImage(media.url)}
+                                  alt={`Thumbnail ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Right Column: Spec Sheet & Purchasing */}
@@ -1070,8 +1213,9 @@ export default function App() {
                         className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase"
                       >
                         <option value="PANTS">PANTS</option>
-                        <option value="BOOTS">BOOTS</option>
+                        <option value="SHOES">SHOES</option>
                         <option value="JACKETS">JACKETS</option>
+                        <option value="HOODIES">HOODIES</option>
                         <option value="OUTERWEAR">OUTERWEAR</option>
                         <option value="TOPS">TOPS</option>
                         <option value="ACCESSORIES">ACCESSORIES</option>
@@ -1106,90 +1250,150 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Image Source & Upload */}
-                    <div className="space-y-1 md:col-span-3">
-                      <label className="text-[8px] text-zinc-400 uppercase font-bold block">PRODUCT IMAGE</label>
+                    {/* Multi-Media Gallery & Upload */}
+                    <div className="space-y-3 md:col-span-3">
+                      <label className="text-[8px] text-zinc-400 uppercase font-bold block">
+                        PRODUCT MEDIA MATRIX (IMAGES & VIDEOS)
+                      </label>
                       
-                      {editingProduct.image ? (
-                        <div className="border border-black/10 p-4 bg-zinc-50 flex flex-col sm:flex-row items-center gap-4">
-                          <div className="w-24 h-24 bg-zinc-200 overflow-hidden flex-shrink-0 border border-black/10">
-                            <img 
-                              src={getProductImage(editingProduct.image)} 
-                              alt="Preview" 
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                          <div className="text-center sm:text-left flex-1 min-w-0">
-                            <span className="text-[8px] text-zinc-400 uppercase font-bold block">IMAGE LOADED SUCCESSFULLY</span>
-                            <span className="text-xs font-mono block truncate uppercase mt-1 text-zinc-600">
-                              {editingProduct.image.startsWith('data:') ? 'DEVICE FILE (BASE64 ARCHIVE)' : editingProduct.image}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setEditingProduct({ ...editingProduct, image: '' })}
-                              className="mt-2 text-red-600 hover:text-red-800 text-[10px] uppercase font-bold tracking-wider font-mono bg-zinc-100 hover:bg-zinc-200 border border-black/10 px-3 py-1.5"
-                            >
-                              DELETE & UPLOAD NEW FILE
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div 
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setIsDragging(true);
-                          }}
-                          onDragLeave={() => {
-                            setIsDragging(false);
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            setIsDragging(false);
-                            const file = e.dataTransfer.files?.[0];
-                            if (file && file.type.startsWith('image/')) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setEditingProduct({ ...editingProduct, image: reader.result as string });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className={`border-2 border-dashed p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${isDragging ? 'border-black bg-zinc-100' : 'border-black/20 hover:border-black/50 bg-zinc-50'}`}
-                          style={{ minHeight: '160px' }}
-                          onClick={() => {
-                            document.getElementById('product-file-upload')?.click();
-                          }}
-                        >
-                          <input 
-                            id="product-file-upload"
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  setEditingProduct({ ...editingProduct, image: reader.result as string });
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }} 
-                          />
-                          <div className="space-y-2 select-none">
-                            <div className="flex justify-center text-zinc-400 mb-1">
-                              <Upload size={24} className={isDragging ? "animate-bounce text-black" : "text-zinc-400"} />
-                            </div>
-                            <p className="text-xs font-mono font-bold uppercase tracking-wider text-black">
-                              {isDragging ? 'DROP TO UPLOAD ARCHIVE' : 'DRAG & DROP IMAGE FILE FROM DEVICE OR CLICK TO SELECT'}
-                            </p>
-                            <p className="text-[10px] text-zinc-400 uppercase font-mono">
-                              // SUPPORTS PNG, JPG, WEBP INTERFACE FILES (SAVES DIRECTLY TO PRODUCT)
-                            </p>
-                          </div>
+                      {/* Grid of uploaded media */}
+                      {((editingProduct.images && editingProduct.images.length > 0) || 
+                        (editingProduct.videos && editingProduct.videos.length > 0)) && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3 bg-zinc-50 border border-black/10">
+                          {/* Images List */}
+                          {editingProduct.images?.map((img, idx) => {
+                            const isCover = editingProduct.image === img;
+                            return (
+                              <div key={`img-${idx}`} className="relative aspect-square bg-zinc-200 border border-black/10 group flex flex-col justify-between overflow-hidden">
+                                <img 
+                                  src={getProductImage(img)} 
+                                  alt={`Preview Image ${idx}`} 
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 bg-black/85 p-1 flex flex-col gap-1 z-10">
+                                  <div className="flex justify-between items-center px-1">
+                                    <span className="text-[7px] text-zinc-400 uppercase font-mono">IMAGE #{idx+1}</span>
+                                    {isCover && (
+                                      <span className="text-[7px] text-[#D4AF37] font-bold font-mono">[COVER]</span>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-1 justify-stretch">
+                                    {!isCover && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingProduct({ ...editingProduct, image: img })}
+                                        className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[7px] uppercase font-bold py-0.5 tracking-wider font-mono cursor-pointer border border-white/5"
+                                      >
+                                        COVER
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const nextImages = editingProduct.images?.filter((_, i) => i !== idx) || [];
+                                        let cover = editingProduct.image;
+                                        if (isCover) {
+                                          cover = nextImages.length > 0 ? nextImages[0] : '';
+                                        }
+                                        setEditingProduct({ ...editingProduct, image: cover, images: nextImages });
+                                      }}
+                                      className="flex-1 bg-red-950/90 hover:bg-red-900 text-red-200 text-[7px] uppercase font-bold py-0.5 tracking-wider font-mono cursor-pointer border border-red-500/20"
+                                    >
+                                      DELETE
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Videos List */}
+                          {editingProduct.videos?.map((vid, idx) => {
+                            return (
+                              <div key={`vid-${idx}`} className="relative aspect-square bg-zinc-950 border border-black/10 flex flex-col justify-between overflow-hidden">
+                                <video 
+                                  src={vid} 
+                                  className="w-full h-full object-cover" 
+                                  muted 
+                                  playsInline
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <div className="bg-black/60 border border-white/10 px-1.5 py-0.5 text-[7px] text-white font-mono font-bold tracking-widest uppercase">
+                                    VIDEO
+                                  </div>
+                                </div>
+                                <div className="absolute inset-x-0 bottom-0 bg-black/85 p-1 flex flex-col gap-1 z-10">
+                                  <div className="flex justify-between items-center px-1">
+                                    <span className="text-[7px] text-zinc-400 uppercase font-mono">VIDEO #{idx+1}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextVideos = editingProduct.videos?.filter((_, i) => i !== idx) || [];
+                                      setEditingProduct({ ...editingProduct, videos: nextVideos });
+                                    }}
+                                    className="w-full bg-red-950/90 hover:bg-red-900 text-red-200 text-[7px] uppercase font-bold py-0.5 tracking-wider font-mono cursor-pointer border border-red-500/20"
+                                  >
+                                    DELETE VIDEO
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
+
+                      {/* Drag & Drop zone accepting multiple files */}
+                      <div 
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
+                        }}
+                        onDragLeave={() => {
+                          setIsDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragging(false);
+                          const files = e.dataTransfer.files;
+                          if (files && files.length > 0) {
+                            handleMediaFiles(files);
+                          }
+                        }}
+                        className={`border-2 border-dashed p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
+                          isDragging ? 'border-black bg-zinc-100' : 'border-black/20 hover:border-black/50 bg-zinc-50'
+                        }`}
+                        style={{ minHeight: '140px' }}
+                        onClick={() => {
+                          document.getElementById('product-media-upload')?.click();
+                        }}
+                      >
+                        <input 
+                          id="product-media-upload"
+                          type="file" 
+                          accept="image/*,video/*" 
+                          multiple 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            if (files && files.length > 0) {
+                              handleMediaFiles(files);
+                            }
+                          }} 
+                        />
+                        <div className="space-y-2 select-none">
+                          <div className="flex justify-center text-zinc-400 mb-1">
+                            <Upload size={24} className={isDragging ? "animate-bounce text-black" : "text-zinc-400"} />
+                          </div>
+                          <p className="text-xs font-mono font-bold uppercase tracking-wider text-black">
+                            {isDragging ? 'DROP TO LOAD FILES' : 'DRAG & DROP MULTIPLE IMAGES/VIDEOS OR CLICK TO SELECT'}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 uppercase font-mono">
+                            // SUPPORTS MULTIPLE IMAGES (PNG, JPG, WEBP) & VIDEOS (MP4, WEBM)
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1197,7 +1401,7 @@ export default function App() {
                   <div className="space-y-1">
                     <label className="text-[8px] text-zinc-400 uppercase font-bold block">AVAILABLE SIZES (Select all that apply)</label>
                     <div className="flex flex-wrap gap-2 pt-1">
-                      {['S', 'M', 'L', 'XL', 'OS'].map(size => {
+                      {['S', 'M', 'L', 'XL', 'OS', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47'].map(size => {
                         const selectedSizes = editingProduct.sizes || [];
                         const isChecked = selectedSizes.includes(size);
                         return (
@@ -1387,7 +1591,7 @@ export default function App() {
               >
                 [ 01. DEPLOY ALL SHOP ]
               </button>
-              {['JACKETS', 'HOODIES', 'PANTS', 'FOOTWEAR'].map((cat, idx) => (
+              {['JACKETS', 'HOODIES', 'PANTS', 'SHOES'].map((cat, idx) => (
                 <button 
                   key={cat}
                   onClick={() => { 

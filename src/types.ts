@@ -9,6 +9,8 @@ export interface Product {
   description: string;
   specs: string[];
   image: string;
+  images?: string[];
+  videos?: string[];
 }
 
 export interface CartItem {
