@@ -15,13 +15,18 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 let supabase: any = null;
-if (supabaseUrl && supabaseAnonKey) {
+let isSupabaseOnline = true;
+
+if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes("placeholder") && !supabaseAnonKey.includes("placeholder") && supabaseUrl !== "" && supabaseAnonKey !== "") {
   try {
     supabase = createClient(supabaseUrl, supabaseAnonKey);
     console.log("Supabase initial setup successful.");
   } catch (err) {
     console.error("Failed to initialize Supabase client:", err);
+    isSupabaseOnline = false;
   }
+} else {
+  isSupabaseOnline = false;
 }
 
 // Initialize Gemini Client
@@ -166,22 +171,34 @@ function saveLocalDb(data: any) {
 }
 
 async function saveToSupabase(key: string, value: any) {
-  if (!supabase) return;
+  if (!supabase || !isSupabaseOnline) return;
   try {
     const { error } = await supabase
       .from("blazebro_store_data")
       .upsert({ key, value }, { onConflict: "key" });
 
     if (error) {
-      console.error(`Error saving ${key} to Supabase:`, error.message);
+      const isFetchFailed = error.message && error.message.includes("fetch failed");
+      if (isFetchFailed) {
+        isSupabaseOnline = false;
+        console.warn(`Supabase network sync suspended due to connection failure: ${error.message}`);
+      } else {
+        console.warn(`Supabase sync warning for ${key}:`, error.message);
+      }
     }
   } catch (err: any) {
-    console.error(`Failed to save ${key} to Supabase:`, err.message);
+    const isFetchFailed = err.message && err.message.includes("fetch failed");
+    if (isFetchFailed) {
+      isSupabaseOnline = false;
+      console.warn(`Supabase network sync suspended due to connection failure: ${err.message}`);
+    } else {
+      console.warn(`Failed to save ${key} to Supabase:`, err.message);
+    }
   }
 }
 
 async function saveToSupabaseAll(data: any) {
-  if (!supabase) return;
+  if (!supabase || !isSupabaseOnline) return;
   await Promise.all([
     saveToSupabase("products", data.products),
     saveToSupabase("settings", data.settings),
@@ -194,6 +211,7 @@ async function initDbFromSupabase() {
   if (!supabase) {
     console.log("Supabase not configured. Using local JSON database.");
     dbCache = loadLocalDb();
+    isSupabaseOnline = false;
     return;
   }
 
@@ -204,7 +222,13 @@ async function initDbFromSupabase() {
       .select("*");
 
     if (error) {
-      console.warn("Supabase table error or not found. Falling back to local JSON db.", error.message);
+      const isFetchFailed = error.message && error.message.includes("fetch failed");
+      if (isFetchFailed) {
+        isSupabaseOnline = false;
+        console.warn("Supabase load failed due to connection failure. Falling back to local JSON db.", error.message);
+      } else {
+        console.warn("Supabase table error or not found. Falling back to local JSON db.", error.message);
+      }
       dbCache = loadLocalDb();
       return;
     }
@@ -225,6 +249,7 @@ async function initDbFromSupabase() {
       });
 
       dbCache = reconstructed;
+      isSupabaseOnline = true;
       console.log("Loaded state successfully from Supabase!");
     } else {
       console.log("Supabase table is empty. Initializing with local JSON data...");
@@ -232,7 +257,13 @@ async function initDbFromSupabase() {
       await saveToSupabaseAll(dbCache);
     }
   } catch (err: any) {
-    console.error("Failed to fetch from Supabase:", err.message);
+    const isFetchFailed = err.message && err.message.includes("fetch failed");
+    if (isFetchFailed) {
+      isSupabaseOnline = false;
+      console.warn("Failed to fetch from Supabase due to connection failure:", err.message);
+    } else {
+      console.error("Failed to fetch from Supabase:", err.message);
+    }
     dbCache = loadLocalDb();
   }
 }
@@ -413,7 +444,7 @@ app.post("/api/ai/describe", async (req, res) => {
 
 // Supabase endpoints
 app.get("/api/supabase/status", async (req, res) => {
-  const configured = !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
+  const configured = !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && !process.env.SUPABASE_URL.includes("placeholder"));
   let connected = false;
   let errorMsg: string | null = null;
 
@@ -422,21 +453,30 @@ app.get("/api/supabase/status", async (req, res) => {
       const { data, error } = await supabase.from("blazebro_store_data").select("key").limit(1);
       if (error) {
         errorMsg = error.message;
+        const isFetchFailed = errorMsg && errorMsg.includes("fetch failed");
+        if (isFetchFailed) {
+          isSupabaseOnline = false;
+        }
         if (error.code === "PGRST116" || error.message.includes("does not exist") || error.message.includes("relation")) {
           errorMsg = "Table 'blazebro_store_data' does not exist in your Supabase database.";
         }
       } else {
         connected = true;
+        isSupabaseOnline = true;
       }
     } catch (err: any) {
       errorMsg = err.message;
+      const isFetchFailed = errorMsg && errorMsg.includes("fetch failed");
+      if (isFetchFailed) {
+        isSupabaseOnline = false;
+      }
     }
   }
 
   res.json({
     configured,
     url: process.env.SUPABASE_URL || "",
-    connected,
+    connected: connected && isSupabaseOnline,
     error: errorMsg,
     sql: `CREATE TABLE blazebro_store_data (
   key TEXT PRIMARY KEY,
@@ -459,9 +499,17 @@ app.post("/api/supabase/sync", async (req, res) => {
     return res.status(400).json({ error: "Supabase is not configured." });
   }
 
+  // Force online flag to retry the connection
+  isSupabaseOnline = true;
+
   try {
     const db = loadDb();
     await saveToSupabaseAll(db);
+    
+    if (!isSupabaseOnline) {
+      return res.status(502).json({ error: "Supabase connection failed during synchronization. Please check your credentials and network connection." });
+    }
+    
     res.json({ success: true, message: "Successfully synced all local data to Supabase!" });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

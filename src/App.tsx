@@ -52,6 +52,7 @@ export default function App() {
   // Storefront catalog & state
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<string>('RECENCY_DESC');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -368,7 +369,7 @@ export default function App() {
     orderText += `-------------------------------\n`;
     
     cart.forEach(item => {
-      orderText += `• ${item.product.code} // ${item.product.name}\n`;
+      orderText += `• ${item.product.name}\n`;
       orderText += `  SIZE: [ ${item.size} ] // QTY: [ ${item.quantity} ]\n`;
       const itemPrice = settings.storeDiscount > 0 ? item.product.price * (1 - settings.storeDiscount / 100) : item.product.price;
       orderText += `  PRICE: ${formatNaira(itemPrice * item.quantity)}\n\n`;
@@ -472,9 +473,15 @@ export default function App() {
 
   const saveProduct = async (e: FormEvent) => {
     e.preventDefault();
-    if (!editingProduct || !editingProduct.code || !editingProduct.name) return;
+    if (!editingProduct || !editingProduct.name) return;
     
     let updatedProduct = { ...editingProduct };
+    
+    // Auto-generate code if it doesn't exist
+    if (!updatedProduct.code) {
+      const sanitizedName = (updatedProduct.name || 'PROD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+      updatedProduct.code = `${sanitizedName}-${Math.floor(100 + Math.random() * 900)}`;
+    }
     
     // Automatically set the first image as the cover if cover is empty
     if (!updatedProduct.image && updatedProduct.images && updatedProduct.images.length > 0) {
@@ -531,16 +538,43 @@ export default function App() {
   };
 
   const categories = ['ALL', 'JACKETS', 'HOODIES', 'PANTS', 'SHOES'];
-  const filteredProducts = products.filter(p => {
-    const matchesCategory = selectedCategory === 'ALL' || p.category.toUpperCase() === selectedCategory;
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q || 
-      p.name.toLowerCase().includes(q) || 
-      p.code.toLowerCase().includes(q) || 
-      p.description.toLowerCase().includes(q) ||
-      (p.specs && p.specs.some(spec => spec.toLowerCase().includes(q)));
-    return matchesCategory && matchesSearch;
-  });
+
+  const getRecencyScore = (p: Product) => {
+    if (!p.id) return 0;
+    const match = p.id.match(/^prod-(\d+)$/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    const shortMatch = p.id.match(/^prod-0*(\d+)$/);
+    if (shortMatch) {
+      return parseInt(shortMatch[1], 10);
+    }
+    return 0;
+  };
+
+  const filteredProducts = products
+    .filter(p => {
+      const matchesCategory = selectedCategory === 'ALL' || p.category.toUpperCase() === selectedCategory;
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q || 
+        p.name.toLowerCase().includes(q) || 
+        p.code.toLowerCase().includes(q) || 
+        p.description.toLowerCase().includes(q) ||
+        (p.specs && p.specs.some(spec => spec.toLowerCase().includes(q)));
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'PRICE_ASC') {
+        return a.price - b.price;
+      }
+      if (sortBy === 'PRICE_DESC') {
+        return b.price - a.price;
+      }
+      if (sortBy === 'RECENCY_DESC') {
+        return getRecencyScore(b) - getRecencyScore(a);
+      }
+      return 0;
+    });
 
   const getCategoryCount = (cat: string) => {
     if (cat === 'ALL') return products.length;
@@ -672,8 +706,8 @@ export default function App() {
                  </div>
                </div>
                
-               {/* Categories */}
-               <div id="catalog-grid" className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-black/10 pb-4">
+               {/* Categories & Sorting Row */}
+               <div id="catalog-grid" className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-black/10 pb-4">
                   <div>
                     <div className="text-[9px] text-[#D4AF37] font-bold tracking-widest uppercase mb-1">// SECURED CATALOG MATRIX</div>
                     <h3 className="font-display font-extrabold text-2xl uppercase tracking-tighter leading-none text-black">
@@ -681,24 +715,44 @@ export default function App() {
                     </h3>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map((cat) => {
-                      const count = getCategoryCount(cat);
-                      return (
-                        <button
-                          key={cat}
-                          onClick={() => setSelectedCategory(cat)}
-                          className={`text-[10px] px-3.5 py-2 border select-none cursor-pointer tracking-widest transition-all font-mono font-bold uppercase flex items-center gap-1.5 ${
-                            selectedCategory === cat 
-                              ? 'border-black bg-black text-white shadow-sm' 
-                              : 'border-black/10 hover:border-black bg-white hover:bg-black text-black/70 hover:text-white'
-                          }`}
-                          style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
-                        >
-                          {cat} <span className={`text-[8px] px-1 font-mono ${selectedCategory === cat ? 'text-[#D4AF37]' : 'text-black/40'}`}>({count})</span>
-                        </button>
-                      );
-                    })}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
+                    {/* Category Selector */}
+                    <div className="flex flex-wrap gap-2 flex-1 xl:flex-initial">
+                      {categories.map((cat) => {
+                        const count = getCategoryCount(cat);
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`text-[10px] px-3.5 py-2 border select-none cursor-pointer tracking-widest transition-all font-mono font-bold uppercase flex items-center gap-1.5 ${
+                              selectedCategory === cat 
+                                ? 'border-black bg-black text-white shadow-sm' 
+                                : 'border-black/10 hover:border-black bg-white hover:bg-black text-black/70 hover:text-white'
+                            }`}
+                            style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                          >
+                            {cat} <span className={`text-[8px] px-1 font-mono ${selectedCategory === cat ? 'text-[#D4AF37]' : 'text-black/40'}`}>({count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Sort Selector */}
+                    <div 
+                      className="flex items-center gap-2 border border-black/15 px-3 py-1.5 bg-zinc-50 font-mono text-xs select-none self-start sm:self-auto min-w-[210px] sm:min-w-0"
+                      style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                    >
+                      <span className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest whitespace-nowrap">// SORT:</span>
+                      <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-transparent border-none outline-none text-black font-mono text-[9px] uppercase font-bold cursor-pointer w-full focus:ring-0"
+                      >
+                        <option value="RECENCY_DESC" className="bg-white text-black font-mono">01 // NEWEST ARCHIVE</option>
+                        <option value="PRICE_ASC" className="bg-white text-black font-mono">02 // VALUATION: LOW TO HIGH</option>
+                        <option value="PRICE_DESC" className="bg-white text-black font-mono">03 // VALUATION: HIGH TO LOW</option>
+                      </select>
+                    </div>
                   </div>
                </div>
 
@@ -714,10 +768,9 @@ export default function App() {
                          style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
                        >
                          <div className="space-y-2 sm:space-y-3">
-                           {/* Code Badge */}
+                           {/* Category Badge */}
                            <div className="flex justify-between items-center text-[8px] font-mono">
-                             <span className="bg-black/5 text-black px-1.5 py-0.5 tracking-widest uppercase font-bold">[ {product.code} ]</span>
-                             <span className="text-zinc-400 uppercase">{product.category}</span>
+                             <span className="bg-black/5 text-black px-1.5 py-0.5 tracking-widest uppercase font-bold">{product.category}</span>
                            </div>
 
                            <div className="aspect-square relative overflow-hidden bg-zinc-900 border border-black/5">
@@ -801,7 +854,7 @@ export default function App() {
                   <span>/</span>
                   <span className="hover:text-white cursor-pointer" onClick={() => { setSelectedCategory(selectedProduct.category); goBackToCatalog(); }}>{selectedProduct.category}</span>
                   <span>/</span>
-                  <span className="text-accent font-bold">[ {selectedProduct.code} ]</span>
+                  <span className="text-accent font-bold uppercase">{selectedProduct.name}</span>
                 </div>
                 
                 <button
@@ -906,9 +959,6 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] text-accent font-bold bg-accent/10 px-2.5 py-0.5 border border-accent/20 tracking-widest uppercase">
-                        SHOP CODE: {selectedProduct.code}
-                      </span>
-                      <span className="text-[9px] bg-black/5 border border-black/10 text-black/60 px-2 py-0.5 uppercase tracking-wider font-bold">
                         {selectedProduct.category}
                       </span>
                     </div>
@@ -1188,19 +1238,6 @@ export default function App() {
                         placeholder="e.g. CONSTRUCT CARGO PANTS"
                         value={editingProduct.name || ''} 
                         onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                        className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase" 
-                      />
-                    </div>
-
-                    {/* Code */}
-                    <div className="space-y-1">
-                      <label className="text-[8px] text-zinc-400 uppercase font-bold block">PRODUCT CODE</label>
-                      <input 
-                        required 
-                        type="text" 
-                        placeholder="e.g. BLZ-05"
-                        value={editingProduct.code || ''} 
-                        onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value.toUpperCase() })}
                         className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase" 
                       />
                     </div>
@@ -1572,7 +1609,6 @@ export default function App() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-black/10 text-zinc-400 font-bold uppercase text-[9px]">
-                      <th className="py-2">CODE</th>
                       <th className="py-2">NAME</th>
                       <th className="py-2">CATEGORY</th>
                       <th className="py-2">PRICE</th>
@@ -1583,7 +1619,6 @@ export default function App() {
                   <tbody>
                     {products.map(p => (
                       <tr key={p.id} className="border-b border-black/5 hover:bg-zinc-50 transition-colors">
-                        <td className="py-3 font-bold text-accent">[{p.code}]</td>
                         <td className="py-3 uppercase font-medium">{p.name}</td>
                         <td className="py-3 uppercase text-[10px] text-zinc-500">{p.category}</td>
                         <td className="py-3 font-bold">{formatNaira(p.price)}</td>
@@ -1597,7 +1632,7 @@ export default function App() {
                           </button>
                           <button 
                             onClick={() => {
-                              if (confirm(`DELETE PROTOCOL FOR PRODUCT [${p.code}]?`)) {
+                              if (confirm(`DELETE PROTOCOL FOR PRODUCT [${p.name}]?`)) {
                                 deleteProduct(p.id);
                               }
                             }} 
@@ -1730,7 +1765,7 @@ export default function App() {
                       <img src={getProductImage(item.product.image)} className="w-16 h-16 object-cover border border-black/5" alt={item.product.name} />
                       <div className="flex-1 flex flex-col justify-between font-mono">
                         <div>
-                          <div className="text-[10px] text-black/50 uppercase">{item.product.code}</div>
+                          <div className="text-[10px] text-black/50 uppercase">{item.product.category}</div>
                           <h4 className="font-bold text-sm leading-tight uppercase truncate max-w-[150px]">{item.product.name}</h4>
                         </div>
                         <div className="flex justify-between items-end">
