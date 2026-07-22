@@ -112,6 +112,7 @@ export default function App() {
   // Product Creator/Editor state inside Admin
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [newSpecInput, setNewSpecInput] = useState('');
+  const [mediaUrlInput, setMediaUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
     // Load state on mount with hash router for secret admin view
@@ -1392,6 +1393,59 @@ export default function App() {
                           <p className="text-[10px] text-zinc-400 uppercase font-mono">
                             // SUPPORTS MULTIPLE IMAGES (PNG, JPG, WEBP) & VIDEOS (MP4, WEBM)
                           </p>
+                        </div>
+                      </div>
+
+                      {/* URL Media Injection Port */}
+                      <div className="space-y-1 bg-zinc-50 border border-black/10 p-3">
+                        <span className="text-[8px] text-zinc-400 uppercase font-bold block">// MANUALLY INJECT MEDIA FROM URL (OPTIONAL)</span>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="PASTE IMAGE OR VIDEO URL (e.g., https://...)" 
+                            value={mediaUrlInput} 
+                            onChange={(e) => setMediaUrlInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!mediaUrlInput.trim()) return;
+                                const url = mediaUrlInput.trim();
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)/) || url.includes("youtube") || url.includes("vimeo") || url.includes("drive.google");
+                                if (isVideo) {
+                                  const currentVideos = editingProduct.videos || [];
+                                  setEditingProduct({ ...editingProduct, videos: [...currentVideos, url] });
+                                } else {
+                                  const currentImages = editingProduct.images || (editingProduct.image ? [editingProduct.image] : []);
+                                  const newImages = [...currentImages, url];
+                                  const cover = editingProduct.image || url;
+                                  setEditingProduct({ ...editingProduct, image: cover, images: newImages });
+                                }
+                                setMediaUrlInput('');
+                              }
+                            }}
+                            className="flex-1 bg-white border border-black/10 px-3 py-1.5 text-xs outline-none focus:border-black/40 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!mediaUrlInput.trim()) return;
+                              const url = mediaUrlInput.trim();
+                              const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)/) || url.includes("youtube") || url.includes("vimeo") || url.includes("drive.google");
+                              if (isVideo) {
+                                const currentVideos = editingProduct.videos || [];
+                                setEditingProduct({ ...editingProduct, videos: [...currentVideos, url] });
+                              } else {
+                                const currentImages = editingProduct.images || (editingProduct.image ? [editingProduct.image] : []);
+                                const newImages = [...currentImages, url];
+                                const cover = editingProduct.image || url;
+                                setEditingProduct({ ...editingProduct, image: cover, images: newImages });
+                              }
+                              setMediaUrlInput('');
+                            }}
+                            className="bg-black text-white hover:bg-zinc-800 border border-black px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest cursor-pointer"
+                          >
+                            ADD MEDIA
+                          </button>
                         </div>
                       </div>
                     </div>
