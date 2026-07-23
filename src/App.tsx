@@ -372,7 +372,13 @@ export default function App() {
       orderText += `• ${item.product.name}\n`;
       orderText += `  SIZE: [ ${item.size} ] // QTY: [ ${item.quantity} ]\n`;
       const itemPrice = settings.storeDiscount > 0 ? item.product.price * (1 - settings.storeDiscount / 100) : item.product.price;
-      orderText += `  PRICE: ${formatNaira(itemPrice * item.quantity)}\n\n`;
+      orderText += `  PRICE: ${formatNaira(itemPrice * item.quantity)}\n`;
+      
+      const resolvedImg = getProductImage(item.product.image);
+      const fullImgUrl = resolvedImg.startsWith('http') 
+        ? resolvedImg 
+        : `${window.location.origin}${resolvedImg.startsWith('/') ? '' : '/'}${resolvedImg}`;
+      orderText += `  IMAGE: ${fullImgUrl}\n\n`;
     });
 
     orderText += `===============================\n`;
@@ -537,7 +543,7 @@ export default function App() {
     }
   };
 
-  const categories = ['ALL', 'JACKETS', 'HOODIES', 'PANTS', 'SHOES'];
+  const categories = ['ALL', 'CLOTHES', 'TROUSERS', 'PANTS', 'SHOES', 'SLIPPERS'];
 
   const getRecencyScore = (p: Product) => {
     if (!p.id) return 0;
@@ -885,7 +891,7 @@ export default function App() {
                             loop 
                             muted 
                             playsInline 
-                            className="w-full h-full object-cover grayscale contrast-125 brightness-95"
+                            className="w-full h-full object-cover md:grayscale-0 grayscale contrast-125 brightness-95"
                           />
                         );
                       } else {
@@ -893,7 +899,7 @@ export default function App() {
                           <img 
                             src={getProductImage(currentMedia.url)} 
                             alt={selectedProduct.name} 
-                            className="w-full h-full object-cover grayscale contrast-125 brightness-95 transition-all duration-300" 
+                            className="w-full h-full object-cover md:grayscale-0 grayscale contrast-125 brightness-95 transition-all duration-300" 
                             referrerPolicy="no-referrer"
                           />
                         );
@@ -1250,10 +1256,11 @@ export default function App() {
                         onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                         className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase"
                       >
+                        <option value="CLOTHES">CLOTHES</option>
+                        <option value="TROUSERS">TROUSERS</option>
                         <option value="PANTS">PANTS</option>
                         <option value="SHOES">SHOES</option>
-                        <option value="JACKETS">JACKETS</option>
-                        <option value="HOODIES">HOODIES</option>
+                        <option value="SLIPPERS">SLIPPERS</option>
                         <option value="OUTERWEAR">OUTERWEAR</option>
                         <option value="TOPS">TOPS</option>
                         <option value="ACCESSORIES">ACCESSORIES</option>
@@ -1680,7 +1687,7 @@ export default function App() {
               >
                 [ 01. DEPLOY ALL SHOP ]
               </button>
-              {['JACKETS', 'HOODIES', 'PANTS', 'SHOES'].map((cat, idx) => (
+              {['CLOTHES', 'TROUSERS', 'PANTS', 'SHOES', 'SLIPPERS'].map((cat, idx) => (
                 <button 
                   key={cat}
                   onClick={() => { 
@@ -1883,21 +1890,6 @@ export default function App() {
             className={`transition-colors flex flex-col items-center gap-1 cursor-pointer ${activeView === 'shop' && selectedCategory === 'ALL' ? 'text-accent' : 'hover:text-white'}`}
           >
             <Store size={18} strokeWidth={2} />
-            <span className="text-[8px] uppercase font-bold tracking-widest">SHOP</span>
-          </button>
-
-          {/* Categories Tab (scrolls directly to catalog filters) */}
-          <button 
-            onClick={() => {
-              setActiveView('shop');
-              setSelectedProduct(null);
-              setTimeout(() => {
-                document.getElementById('catalog-grid')?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="hover:text-white transition-colors flex flex-col items-center gap-1 cursor-pointer"
-          >
-            <Sliders size={18} strokeWidth={2} />
             <span className="text-[8px] uppercase font-bold tracking-widest">SHOP</span>
           </button>
 

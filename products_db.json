@@ -23,7 +23,7 @@
         "COORDINATES // 6.4542° N, 3.3887° E LOGGED"
       ],
       "stock": 5,
-      "category": "JACKETS",
+      "category": "CLOTHES",
       "description": "HIGH-ALTITUDE SHIELD CONSTRUCTED FROM MIL-SPEC REINFORCED MEMBRANE. ASYMMETRIC WEATHERPROOF ZIP CLOSURES, COLLAPSIBLE RADAR HOOD SYSTEM, AND MODULAR STRAPPING MATRIX FOR MAXIMUM MOBILITY CONSTRAINTS."
     },
     {
@@ -49,7 +49,7 @@
         "WASH SPEC // REVERSE CYCLE COLD ONLY"
       ],
       "stock": 12,
-      "category": "HOODIES",
+      "category": "TROUSERS",
       "description": "HEAVYWEIGHT 480GSM COTTON-GRID FLEECE FORMULATED FOR STATIC DEGREES. FEATURES AN INTEGRATED SCUBA-PROFILE FACE SHIELD, DEEP-CARGO FRONT VENTRAL HOUSING, AND COATED D-RING REINFORCEMENTS."
     },
     {
@@ -106,6 +106,32 @@
       "stock": 4,
       "category": "SHOES",
       "description": "TACTICAL PLATFORM FOOT CONSTRUCT FEATURING CHISELED GEOMETRIC OUTSOLE ARMATURE. WRAP-AROUND BALLISTIC STRAPPING HARDWARE WITH STEEL COUPLING SYSTEMS AND VULCANIZED REINFORCED TOE-CAPS."
+    },
+    {
+      "id": "prod-05",
+      "code": "BLZ-05",
+      "name": "TACTICAL SHIELD SLIPPER",
+      "image": "IMAGE_BLZ_04",
+      "price": 45000,
+      "sizes": [
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45"
+      ],
+      "specs": [
+        "VULCANIZED WATER-RESISTANT RUBBERIZED OUTSOLE",
+        "ADJUSTABLE QUICK-RELEASE COUPLING FASTENER STRAPS",
+        "ERCH-GRIP ANTI-SLIP INNER BED EMBOSSING",
+        "TACTICAL SLIPPER CONSTRUCT FOR RECOVERY DEPLOYMENT"
+      ],
+      "stock": 10,
+      "category": "SLIPPERS",
+      "description": "HIGH-PERFORMANCE BRUTALIST RECOVERY SLIPPERS DESIGNED FOR POST-OPERATION DEPLOYMENT. FEATURING AN ADJUSTABLE COUPLING FASTENER SYSTEM AND A HIGH-TRACTION HEAVY-DUTY OUTSOLE."
     }
   ],
   "settings": {
@@ -118,7 +144,7 @@
     "whatsappNumber": "2348031234567"
   },
   "stats": {
-    "views": 214,
+    "views": 216,
     "whatsappClicks": 25,
     "potentialRevenue": 4730000
   },
