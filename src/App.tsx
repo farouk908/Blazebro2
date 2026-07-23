@@ -576,7 +576,7 @@ export default function App() {
     setEditingProduct({
       code: '',
       name: '',
-      category: 'PANTS',
+      category: 'TROUSERS',
       price: 0,
       stock: 5,
       sizes: ['S', 'M', 'L'],
@@ -684,7 +684,7 @@ export default function App() {
     }
   };
 
-  const categories = ['ALL', 'CLOTHES', 'TROUSERS', 'PANTS', 'SHOES', 'SLIPPERS'];
+  const categories = ['ALL', 'CLOTHES', 'TROUSERS', 'SHOES', 'SLIPPERS'];
 
   const getRecencyScore = (p: Product) => {
     if (!p.id) return 0;
@@ -701,7 +701,10 @@ export default function App() {
 
   const filteredProducts = products
     .filter(p => {
-      const matchesCategory = selectedCategory === 'ALL' || p.category.toUpperCase() === selectedCategory;
+      const pCat = p.category.toUpperCase();
+      const matchesCategory = selectedCategory === 'ALL' || 
+        pCat === selectedCategory ||
+        (selectedCategory === 'TROUSERS' && pCat === 'PANTS');
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch = !q || 
         p.name.toLowerCase().includes(q) || 
@@ -725,7 +728,11 @@ export default function App() {
 
   const getCategoryCount = (cat: string) => {
     if (cat === 'ALL') return products.length;
-    return products.filter(p => p.category.toUpperCase() === cat.toUpperCase()).length;
+    return products.filter(p => {
+      const pCat = p.category.toUpperCase();
+      if (cat === 'TROUSERS') return pCat === 'PANTS' || pCat === 'TROUSERS';
+      return pCat === cat.toUpperCase();
+    }).length;
   };
 
   return (
@@ -1446,13 +1453,12 @@ export default function App() {
                     <div className="space-y-1">
                       <label className="text-[8px] text-zinc-400 uppercase font-bold block">CATEGORY</label>
                       <select 
-                        value={editingProduct.category || 'PANTS'} 
+                        value={editingProduct.category || 'TROUSERS'} 
                         onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                         className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase"
                       >
                         <option value="CLOTHES">CLOTHES</option>
                         <option value="TROUSERS">TROUSERS</option>
-                        <option value="PANTS">PANTS</option>
                         <option value="SHOES">SHOES</option>
                         <option value="SLIPPERS">SLIPPERS</option>
                         <option value="OUTERWEAR">OUTERWEAR</option>
@@ -1881,7 +1887,7 @@ export default function App() {
               >
                 [ 01. DEPLOY ALL SHOP ]
               </button>
-              {['CLOTHES', 'TROUSERS', 'PANTS', 'SHOES', 'SLIPPERS'].map((cat, idx) => (
+              {['CLOTHES', 'TROUSERS', 'SHOES', 'SLIPPERS'].map((cat, idx) => (
                 <button 
                   key={cat}
                   onClick={() => { 

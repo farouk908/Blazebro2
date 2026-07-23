@@ -49,7 +49,7 @@
         "WASH SPEC // REVERSE CYCLE COLD ONLY"
       ],
       "stock": 12,
-      "category": "TROUSERS",
+      "category": "CLOTHES",
       "description": "HEAVYWEIGHT 480GSM COTTON-GRID FLEECE FORMULATED FOR STATIC DEGREES. FEATURES AN INTEGRATED SCUBA-PROFILE FACE SHIELD, DEEP-CARGO FRONT VENTRAL HOUSING, AND COATED D-RING REINFORCEMENTS."
     },
     {
@@ -144,7 +144,7 @@
     "whatsappNumber": "2348031234567"
   },
   "stats": {
-    "views": 218,
+    "views": 230,
     "whatsappClicks": 25,
     "potentialRevenue": 4730000
   },
