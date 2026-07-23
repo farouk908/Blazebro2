@@ -56,6 +56,7 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -292,6 +293,19 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [products, activeView]);
+
+  // Synchronize size selection with selected product changes
+  useEffect(() => {
+    if (selectedProduct) {
+      if (selectedProduct.sizes && selectedProduct.sizes.length > 0) {
+        setSelectedSize(selectedProduct.sizes[0]);
+      } else {
+        setSelectedSize('OS');
+      }
+    } else {
+      setSelectedSize('');
+    }
+  }, [selectedProduct]);
 
   // UI Helper to resolve image paths (handling map strings vs external links)
   const getProductImage = (imageKey: string) => {
@@ -1016,10 +1030,63 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Sizing Matrix Selection */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest font-mono">// SELECT SIZE MATRIX</span>
+                      <span className="text-[10px] text-accent font-mono uppercase font-bold">[ SELECTED: {selectedSize || 'NONE'} ]</span>
+                    </div>
+                    {selectedProduct.sizes && selectedProduct.sizes.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProduct.sizes.map((size) => {
+                          const isSelected = selectedSize === size;
+                          return (
+                            <button
+                              key={size}
+                              onClick={() => setSelectedSize(size)}
+                              className={`border px-3.5 py-2 text-xs font-mono font-bold transition-all uppercase cursor-pointer min-w-[45px] text-center ${
+                                isSelected 
+                                  ? 'bg-black text-white border-black' 
+                                  : 'bg-transparent text-black border-black/20 hover:border-black/60'
+                              }`}
+                              style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                            >
+                              {size}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs font-mono text-zinc-500 uppercase">
+                        [ SINGLE UNIT // ONE SIZE AVAILABLE ]
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Description & Technical Specs */}
+                  {selectedProduct.description && (
+                    <div className="text-xs uppercase text-zinc-600 leading-relaxed font-mono pt-2">
+                      {selectedProduct.description}
+                    </div>
+                  )}
+
+                  {selectedProduct.specs && selectedProduct.specs.length > 0 && (
+                    <div className="border-t border-black/10 pt-4 space-y-2">
+                      <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest block font-mono">// TECH SPECIFICATIONS</span>
+                      <ul className="space-y-1 text-[10px] font-mono text-zinc-500 uppercase">
+                        {selectedProduct.specs.map((spec, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-accent">•</span>
+                            <span>{spec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <div className="pt-6 border-t border-black/10">
                     <button 
-                      onClick={(e) => { e.stopPropagation(); addToCart(selectedProduct, 'OS'); }}
+                      onClick={(e) => { e.stopPropagation(); addToCart(selectedProduct, selectedSize || 'OS'); }}
                       className="w-full bg-black text-white hover:bg-accent hover:text-white transition-colors py-4 font-mono font-bold tracking-widest text-sm flex items-center justify-center gap-3 cursor-pointer"
                       style={{ clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))' }}
                     >
