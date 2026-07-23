@@ -166,25 +166,24 @@ export default function App() {
       const res = await fetch('/api/products');
       const data = await res.json();
       
-      // Sync products with localStorage to prevent loss on container restarts (after each commit)
-      let localCache: Product[] = [];
+      // Get custom products from localStorage
+      let customProducts: Product[] = [];
       try {
-        const stored = localStorage.getItem('blazebro_products_cache');
+        const stored = localStorage.getItem('blazebro_custom_products');
         if (stored) {
-          localCache = JSON.parse(stored);
+          customProducts = JSON.parse(stored);
         }
       } catch (e) {
-        console.error("Failed to parse local products cache", e);
+        console.error("Failed to parse custom products", e);
       }
 
-      // Check if there are any products in localCache that are missing on the server
+      // Check which custom products are missing on the server
       const serverIds = new Set(data.map((p: any) => p.id));
-      const missingProducts = localCache.filter(p => p.id && !serverIds.has(p.id));
+      const missingCustoms = customProducts.filter(p => p.id && !serverIds.has(p.id));
 
-      if (missingProducts.length > 0) {
-        console.log(`Restoring ${missingProducts.length} custom products to server database...`);
-        // Sync them to the server sequentially
-        for (const prod of missingProducts) {
+      if (missingCustoms.length > 0) {
+        console.log(`Restoring ${missingCustoms.length} custom products to server database...`);
+        for (const prod of missingCustoms) {
           try {
             await fetch('/api/products', {
               method: 'POST',
@@ -199,9 +198,18 @@ export default function App() {
         const refreshedRes = await fetch('/api/products');
         const refreshedData = await refreshedRes.json();
         setProducts(refreshedData);
+        
+        // Update local custom products with any server-side changes
+        const defaultIds = ['prod-01', 'prod-02', 'prod-03', 'prod-04', 'prod-05'];
+        const updatedCustoms = refreshedData.filter((p: any) => !defaultIds.includes(p.id));
+        localStorage.setItem('blazebro_custom_products', JSON.stringify(updatedCustoms));
         localStorage.setItem('blazebro_products_cache', JSON.stringify(refreshedData));
       } else {
         setProducts(data);
+        // Sync the client's custom products cache with whatever custom products are currently on the server
+        const defaultIds = ['prod-01', 'prod-02', 'prod-03', 'prod-04', 'prod-05'];
+        const currentCustoms = data.filter((p: any) => !defaultIds.includes(p.id));
+        localStorage.setItem('blazebro_custom_products', JSON.stringify(currentCustoms));
         localStorage.setItem('blazebro_products_cache', JSON.stringify(data));
       }
     } catch (err) {
@@ -213,7 +221,32 @@ export default function App() {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
-      setSettings(data);
+      
+      // Sync settings with localStorage
+      let cachedSettings: Partial<SystemSettings> | null = null;
+      try {
+        const stored = localStorage.getItem('blazebro_settings_cache');
+        if (stored) {
+          cachedSettings = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Failed to parse cached settings", e);
+      }
+
+      if (cachedSettings && JSON.stringify(data) !== JSON.stringify({ ...data, ...cachedSettings })) {
+        console.log("Restoring settings from client cache...");
+        const updateRes = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cachedSettings)
+        });
+        const updatedData = await updateRes.json();
+        setSettings(updatedData.settings || updatedData);
+        localStorage.setItem('blazebro_settings_cache', JSON.stringify(updatedData.settings || updatedData));
+      } else {
+        setSettings(data);
+        localStorage.setItem('blazebro_settings_cache', JSON.stringify(data));
+      }
     } catch (err) {
       console.error("Error loading settings:", err);
     }
@@ -569,6 +602,27 @@ export default function App() {
   const deleteProduct = async (id: string) => {
     if (!confirm("TERMINATE PRODUCT FILE IN DATA MATRIX?")) return;
     try {
+      // Remove from custom products in localStorage first so it doesn't get auto-restored
+      let customProducts: Product[] = [];
+      try {
+        const stored = localStorage.getItem('blazebro_custom_products');
+        if (stored) {
+          customProducts = JSON.parse(stored).filter((p: any) => p.id !== id);
+          localStorage.setItem('blazebro_custom_products', JSON.stringify(customProducts));
+        }
+      } catch (e) {
+        console.error("Failed to update custom products on delete", e);
+      }
+
+      // Also clean up general products cache
+      try {
+        const storedGeneral = localStorage.getItem('blazebro_products_cache');
+        if (storedGeneral) {
+          const general = JSON.parse(storedGeneral).filter((p: any) => p.id !== id);
+          localStorage.setItem('blazebro_products_cache', JSON.stringify(general));
+        }
+      } catch (e) {}
+
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchProducts();
@@ -589,6 +643,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setSettings(data.settings);
+        localStorage.setItem('blazebro_settings_cache', JSON.stringify(data.settings));
       }
     } catch (err) {
       console.error("Error saving settings:", err);
