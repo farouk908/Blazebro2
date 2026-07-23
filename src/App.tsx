@@ -131,6 +131,7 @@ export default function App() {
   const [newSpecInput, setNewSpecInput] = useState('');
   const [mediaUrlInput, setMediaUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
     // Load state on mount with hash router for secret admin view
   useEffect(() => {
@@ -376,7 +377,7 @@ export default function App() {
 
   // UI Helper to resolve image paths (handling map strings vs external links)
   const getProductImage = (imageKey: string) => {
-    return imageMap[imageKey] || imageKey || "https://picsum.photos/seed/blazebro/600/600";
+    return imageMap[imageKey] || imageKey || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='100%' height='100%' fill='%2318181b'/><line x1='0' y1='0' x2='600' y2='600' stroke='%2327272a' stroke-width='2'/><line x1='600' y1='0' x2='0' y2='600' stroke='%2327272a' stroke-width='2'/><rect x='150' y='250' width='300' height='100' fill='none' stroke='%233f3f46' stroke-width='2'/><text x='300' y='308' font-family='monospace' font-size='14' font-weight='bold' fill='%2371717a' text-anchor='middle' letter-spacing='4'>BLAZEBRO // ARCHIVE</text><text x='300' y='550' font-family='monospace' font-size='10' fill='%233f3f46' text-anchor='middle' letter-spacing='2'>NO PHYSICAL IMAGING AVAILABLE</text></svg>";
   };
 
   const getProductMediaList = (product: Product) => {
@@ -613,11 +614,6 @@ export default function App() {
       updatedProduct.image = updatedProduct.images[0];
     }
 
-    if (!updatedProduct.image) {
-      alert("PLEASE UPLOAD AT LEAST ONE IMAGE AS THE COVER TO CREATE THE PRODUCT.");
-      return;
-    }
-
     try {
       const res = await fetch('/api/products', {
         method: 'POST',
@@ -625,11 +621,16 @@ export default function App() {
         body: JSON.stringify(updatedProduct)
       });
       if (res.ok) {
+        setSaveSuccessMessage(`STATUS // PRODUCT "${updatedProduct.name.toUpperCase()}" RECORD SAVED TO ARCHIVE.`);
+        setTimeout(() => setSaveSuccessMessage(null), 5000);
         fetchProducts();
         setEditingProduct(null);
+      } else {
+        alert("ERROR // COULD NOT COMMENCE PRODUCT WRITE SEQUENCE.");
       }
     } catch (err) {
       console.error("Error saving product:", err);
+      alert("ERROR // SERVICE TRANS-MATRIX OFFLINE.");
     }
   };
 
@@ -1421,6 +1422,13 @@ export default function App() {
                   </button>
                 )}
               </div>
+
+              {saveSuccessMessage && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  {saveSuccessMessage}
+                </div>
+              )}
 
               {!editingProduct ? (
                 <div className="py-4 text-center">
