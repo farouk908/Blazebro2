@@ -164,7 +164,45 @@ export default function App() {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      setProducts(data);
+      
+      // Sync products with localStorage to prevent loss on container restarts (after each commit)
+      let localCache: Product[] = [];
+      try {
+        const stored = localStorage.getItem('blazebro_products_cache');
+        if (stored) {
+          localCache = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Failed to parse local products cache", e);
+      }
+
+      // Check if there are any products in localCache that are missing on the server
+      const serverIds = new Set(data.map((p: any) => p.id));
+      const missingProducts = localCache.filter(p => p.id && !serverIds.has(p.id));
+
+      if (missingProducts.length > 0) {
+        console.log(`Restoring ${missingProducts.length} custom products to server database...`);
+        // Sync them to the server sequentially
+        for (const prod of missingProducts) {
+          try {
+            await fetch('/api/products', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(prod)
+            });
+          } catch (syncErr) {
+            console.error("Failed to sync product back to server:", prod.id, syncErr);
+          }
+        }
+        // Re-fetch from server to get the complete synced list
+        const refreshedRes = await fetch('/api/products');
+        const refreshedData = await refreshedRes.json();
+        setProducts(refreshedData);
+        localStorage.setItem('blazebro_products_cache', JSON.stringify(refreshedData));
+      } else {
+        setProducts(data);
+        localStorage.setItem('blazebro_products_cache', JSON.stringify(data));
+      }
     } catch (err) {
       console.error("Error loading products:", err);
     }
@@ -891,7 +929,7 @@ export default function App() {
                             loop 
                             muted 
                             playsInline 
-                            className="w-full h-full object-cover md:grayscale-0 grayscale contrast-125 brightness-95"
+                            className="w-full h-full object-cover contrast-125 brightness-95"
                           />
                         );
                       } else {
@@ -899,7 +937,7 @@ export default function App() {
                           <img 
                             src={getProductImage(currentMedia.url)} 
                             alt={selectedProduct.name} 
-                            className="w-full h-full object-cover md:grayscale-0 grayscale contrast-125 brightness-95 transition-all duration-300" 
+                            className="w-full h-full object-cover contrast-125 brightness-95 transition-all duration-300" 
                             referrerPolicy="no-referrer"
                           />
                         );
