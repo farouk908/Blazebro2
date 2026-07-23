@@ -1499,7 +1499,7 @@ export default function App() {
                   <div className="space-y-1">
                     <label className="text-[8px] text-zinc-400 uppercase font-bold block">AVAILABLE SIZES (Select all that apply)</label>
                     <div className="flex flex-wrap gap-2 pt-1">
-                      {['S', 'M', 'L', 'XL', 'OS', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47'].map(size => {
+                      {['S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL', 'OS', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47'].map(size => {
                         const selectedSizes = editingProduct.sizes || [];
                         const isChecked = selectedSizes.includes(size);
                         return (
