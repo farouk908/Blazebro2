@@ -50,7 +50,14 @@ const imageMap: Record<string, string> = {
 
 export default function App() {
   // Storefront catalog & state
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem('blazebro_products_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<string>('RECENCY_DESC');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -61,14 +68,22 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Settings & Stats
-  const [settings, setSettings] = useState<SystemSettings>({
-    whatsappNumber: "2348031234567",
-    latitude: "6.4542",
-    longitude: "3.3887",
-    tagline: "BLAZEBRO // HIGH-PERFORMANCE BRUTALIST CONSTRUCTS.",
-    adminPasscode: "1337",
-    allowAiAdvisor: false,
-    storeDiscount: 0
+  const [settings, setSettings] = useState<SystemSettings>(() => {
+    const defaults = {
+      whatsappNumber: "2348031234567",
+      latitude: "6.4542",
+      longitude: "3.3887",
+      tagline: "BLAZEBRO // HIGH-PERFORMANCE BRUTALIST CONSTRUCTS.",
+      adminPasscode: "1337",
+      allowAiAdvisor: false,
+      storeDiscount: 0
+    };
+    try {
+      const cached = localStorage.getItem('blazebro_settings_cache');
+      return cached ? JSON.parse(cached) : defaults;
+    } catch (e) {
+      return defaults;
+    }
   });
   const [stats, setStats] = useState<AdminStats>({
     views: 128,
@@ -163,6 +178,16 @@ export default function App() {
 
   const fetchProducts = async () => {
     try {
+      // Instantly load from cache first if the current state is empty to prevent blank screen
+      if (!products || products.length === 0) {
+        try {
+          const cached = localStorage.getItem('blazebro_products_cache');
+          if (cached) {
+            setProducts(JSON.parse(cached));
+          }
+        } catch (e) {}
+      }
+
       const res = await fetch('/api/products');
       const data = await res.json();
       
@@ -183,7 +208,8 @@ export default function App() {
 
       if (missingCustoms.length > 0) {
         console.log(`Restoring ${missingCustoms.length} custom products to server database...`);
-        for (const prod of missingCustoms) {
+        // Restore custom products in parallel instead of one-by-one sequentially
+        await Promise.all(missingCustoms.map(async (prod) => {
           try {
             await fetch('/api/products', {
               method: 'POST',
@@ -193,7 +219,8 @@ export default function App() {
           } catch (syncErr) {
             console.error("Failed to sync product back to server:", prod.id, syncErr);
           }
-        }
+        }));
+
         // Re-fetch from server to get the complete synced list
         const refreshedRes = await fetch('/api/products');
         const refreshedData = await refreshedRes.json();
@@ -214,6 +241,13 @@ export default function App() {
       }
     } catch (err) {
       console.error("Error loading products:", err);
+      // Fallback: render from client cache if server is temporarily unreachable or slow
+      try {
+        const cached = localStorage.getItem('blazebro_products_cache');
+        if (cached) {
+          setProducts(JSON.parse(cached));
+        }
+      } catch (e) {}
     }
   };
 
