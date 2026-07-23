@@ -685,7 +685,7 @@ export default function App() {
     }
   };
 
-  const categories = ['ALL', 'CLOTHES', 'TROUSERS', 'SHOES', 'SLIPPERS'];
+  const categories = ['ALL', 'CLOTHES', 'TROUSERS', 'SHOES', 'SLIPPERS', 'OUTERWEAR', 'TOPS', 'ACCESSORIES'];
 
   const getRecencyScore = (p: Product) => {
     if (!p.id) return 0;
@@ -1443,7 +1443,7 @@ export default function App() {
                 </div>
               ) : (
                 <form onSubmit={saveProduct} className="space-y-4 pt-2">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {/* Name */}
                     <div className="space-y-1">
                       <label className="text-[8px] text-zinc-400 uppercase font-bold block">PRODUCT NAME</label>
@@ -1454,6 +1454,21 @@ export default function App() {
                         value={editingProduct.name || ''} 
                         onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                         className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 uppercase" 
+                      />
+                    </div>
+
+                    {/* Code */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[8px] text-zinc-400 uppercase font-bold block">PRODUCT CODE</label>
+                        <span className="text-[7px] text-[#D4AF37] font-mono">[OPTIONAL]</span>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="AUTO-GENERATED"
+                        value={editingProduct.code || ''} 
+                        onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value.toUpperCase().replace(/\s/g, '-') })}
+                        className="w-full bg-zinc-50 border border-black/10 px-3 py-2 text-xs outline-none focus:border-black/40 font-mono uppercase" 
                       />
                     </div>
 
@@ -1504,7 +1519,7 @@ export default function App() {
                     </div>
 
                     {/* Multi-Media Gallery & Upload */}
-                    <div className="space-y-3 md:col-span-3">
+                    <div className="space-y-3 md:col-span-2 lg:col-span-5">
                       <label className="text-[8px] text-zinc-400 uppercase font-bold block">
                         PRODUCT MEDIA MATRIX (IMAGES & VIDEOS)
                       </label>
